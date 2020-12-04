@@ -1,0 +1,8 @@
+name: Blades
+main: com.yukiemeralis.blogspot.blades.Main
+version: 1.0
+api-version: 1.13
+commands:
+  blade:
+    description: Manager for all blade related commands
+    usage: /blade
