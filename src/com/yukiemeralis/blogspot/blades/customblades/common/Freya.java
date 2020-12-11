@@ -17,11 +17,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import net.minecraft.server.v1_16_R3.EntityTypes;
+
 public class Freya extends Blade 
 {
     public Freya() 
     {
-        super("Freya", Element.FIRE, Role.ATTACK, WeaponType.SWORD, 1);
+        super("Freya", Element.FIRE, Role.ATTACK, WeaponType.SWORD, 1, EntityTypes.WITHER_SKELETON, false);
 
         chart = AffinityUtils.createAffinityChart(this, 
             AffinityUtils.createAffinityRow(null,                    new Skill_BlazingSpirit(1), new Skill_BurningEdge(1), new Skill_AffinityBoost(1), new Skill_RagingEmber(1), new Skill_RadiantCall(1), null),

@@ -3,6 +3,7 @@ package com.yukiemeralis.blogspot.blades.guis;
 import com.yukiemeralis.blogspot.blades.Blade;
 import com.yukiemeralis.blogspot.blades.BladeData;
 import com.yukiemeralis.blogspot.blades.PlayerAccount;
+import com.yukiemeralis.blogspot.blades.listeners.events.BladeEngageEvent;
 import com.yukiemeralis.blogspot.blades.utils.TextUtils;
 
 import org.bukkit.Bukkit;
@@ -134,6 +135,13 @@ public class EngageGUI implements Listener
 
             account.setEquippedBlade(account.getEngagedBlades().get(0));
 
+            if (account.getCurrentBlade() == null)
+            {
+                Bukkit.getPluginManager().callEvent(new BladeEngageEvent((Player) event.getWhoClicked(), account.getEngagedBlades().get(0)));
+            } else if (!account.getCurrentBlade().getCombatRole().equals(account.getEngagedBlades().get(0).getCombatRole())){
+                Bukkit.getPluginManager().callEvent(new BladeEngageEvent((Player) event.getWhoClicked(), account.getEngagedBlades().get(0)));
+            }
+
             reloadInventory((Player) event.getWhoClicked());
             return;
         } else if (slot % 9 == 1) {
@@ -189,6 +197,13 @@ public class EngageGUI implements Listener
             account.getBladeStock().removeIf(blade_tmp -> blade_tmp == null);
 
             reloadInventory((Player) event.getWhoClicked());
+
+            if (account.getCurrentBlade() != null)
+            {
+                Bukkit.getPluginManager().callEvent(new BladeEngageEvent((Player) event.getWhoClicked(), account.getEngagedBlades().get(0)));
+            } else if (!account.getCurrentBlade().getCombatRole().equals(account.getEngagedBlades().get(0).getCombatRole())){
+                Bukkit.getPluginManager().callEvent(new BladeEngageEvent((Player) event.getWhoClicked(), account.getEngagedBlades().get(0)));
+            }
         }
     }
 

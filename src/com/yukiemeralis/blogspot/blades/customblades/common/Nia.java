@@ -2,6 +2,7 @@ package com.yukiemeralis.blogspot.blades.customblades.common;
 
 import com.yukiemeralis.blogspot.blades.Blade;
 import com.yukiemeralis.blogspot.blades.BladeData;
+import com.yukiemeralis.blogspot.blades.Main;
 import com.yukiemeralis.blogspot.blades.affinity.AffinityUtils;
 import com.yukiemeralis.blogspot.blades.affinity.skills.specials.nia.Skill_CellularStimulus;
 import com.yukiemeralis.blogspot.blades.affinity.skills.specials.nia.Skill_InstantRegen;
@@ -10,18 +11,23 @@ import com.yukiemeralis.blogspot.blades.affinity.skills.specials.nia.Skill_Water
 import com.yukiemeralis.blogspot.blades.enums.Element;
 import com.yukiemeralis.blogspot.blades.enums.Role;
 import com.yukiemeralis.blogspot.blades.enums.WeaponType;
+import com.yukiemeralis.blogspot.blades.utils.Particles;
 
+import org.bukkit.Particle;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
-public class Nia extends Blade 
+import net.minecraft.server.v1_16_R3.EntityTypes;
+
+public class Nia extends Blade
 {
     public Nia() 
     {
-        super("WaterStory", Element.WATER, Role.HEALER, WeaponType.SWORD, 4);
+        super("WaterStory", Element.WATER, Role.HEALER, WeaponType.SWORD, 4, EntityTypes.ZOMBIE, true);
         chart = AffinityUtils.createAffinityChart(this, 
             AffinityUtils.createAffinityRow(new Skill_WaterMastery(1), new Skill_InstantRegen(1), new Skill_CellularStimulus(1), new Skill_SeaOfPlenty(1), null, null, null),
             AffinityUtils.createAffinityRow(null,                      new Skill_InstantRegen(2), new Skill_CellularStimulus(2), new Skill_SeaOfPlenty(2), null, null, null),
@@ -46,6 +52,8 @@ public class Nia extends Blade
 
         if (BladeData.getAccount(driver).getParty() != null)
             healParty(driver, BladeData.getAccount(driver).getParty(), percent);
+
+        Particles.drawSphere(driver.getEyeLocation(), 3, 15, 30, Particle.WATER_BUBBLE, null);
     }
 
     @Override
@@ -56,6 +64,18 @@ public class Nia extends Blade
 
         Vector direction = target.getLocation().toVector().subtract(driver.getLocation().toVector());
         target.setVelocity(direction.multiply(0.5));
+
+        for (int i = 0; i < 20; i++)
+        {
+            int index = i;
+            new BukkitRunnable() {
+                @Override
+                public void run()
+                {
+                    Particles.drawCircle(driver.getEyeLocation(), 1 + (index/5), 15 + index, Particle.WATER_BUBBLE, null);
+                }
+            }.runTaskLater(Main.getInstance(), index);
+        }
     }
 
     @Override
@@ -66,6 +86,8 @@ public class Nia extends Blade
 
         if (BladeData.getAccount(driver).getParty() != null)
             healParty(driver, BladeData.getAccount(driver).getParty(), percent);
+
+        Particles.drawSphere(driver.getEyeLocation(), 4, 20, 45, Particle.WATER_BUBBLE, null);
     }
 
     @Override
@@ -78,6 +100,8 @@ public class Nia extends Blade
             healParty(driver, BladeData.getAccount(driver).getParty(), percent);
 
         driver.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 10*20, 15));
+
+        Particles.drawSphere(driver.getEyeLocation(), 5, 20, 45, Particle.WATER_BUBBLE, null);
     }
     
 }

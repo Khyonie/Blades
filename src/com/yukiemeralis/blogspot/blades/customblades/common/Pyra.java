@@ -12,18 +12,23 @@ import com.yukiemeralis.blogspot.blades.affinity.skills.specials.pyra.Skill_Puri
 import com.yukiemeralis.blogspot.blades.enums.Element;
 import com.yukiemeralis.blogspot.blades.enums.Role;
 import com.yukiemeralis.blogspot.blades.enums.WeaponType;
+import com.yukiemeralis.blogspot.blades.utils.Particles;
 
+import org.bukkit.Particle;
 import org.bukkit.entity.Damageable;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
+
+import net.minecraft.server.v1_16_R3.EntityTypes;
 
 public class Pyra extends Blade 
 {
     public Pyra() 
     {
-        super("Pyra", Element.FIRE, Role.ATTACK, WeaponType.SWORD, 4);
+        super("Pyra", Element.FIRE, Role.ATTACK, WeaponType.SWORD, 4, EntityTypes.ZOMBIE, true);
 
         chart = AffinityUtils.createAffinityChart(this, 
             AffinityUtils.createAffinityRow(null, new Skill_BlazingSpirit(1), new Skill_PurifyingFlames(1), new Skill_AffinityBoost(1), new Skill_FlameNova(1), new Skill_ProminenceRevolt(1), new Skill_BlazingEnd(1)),
@@ -46,6 +51,12 @@ public class Pyra extends Blade
     {
         target.setFireTicks(60);
         ((Damageable) target).damage(6.0 * chart.getHighestSkillInColumn(4).getModifierValue());
+
+        // Visual effect
+        for (int i = 0; i < 7; i++)
+        {
+            Particles.drawCircle(((LivingEntity) target).getEyeLocation(), 1 + (i / 2), 15 + i, Particle.FLAME, null);
+        }
     }
 
     @Override
@@ -53,6 +64,12 @@ public class Pyra extends Blade
     {
         target.setFireTicks(60);
         ((Damageable) target).damage(10.0 * chart.getHighestSkillInColumn(5).getModifierValue());
+
+        // Visual effect
+        for (int i = 0; i < 7; i++)
+        {
+            Particles.drawCircle(((LivingEntity) target).getEyeLocation(), 1 + (i / 2), 15 + i, Particle.FLAME, null);
+        }
     }
 
     @Override
@@ -60,6 +77,8 @@ public class Pyra extends Blade
     {
         target.setFireTicks(60);
         ((Damageable) target).damage(14.0 * chart.getHighestSkillInColumn(6).getModifierValue());
+
+        Particles.drawCylinder(target.getLocation(), 1, 15, 12, 0.16, Particle.FLAME, null);
     }
 
     @Override
@@ -87,5 +106,16 @@ public class Pyra extends Blade
         }.runTaskLater(Main.getInstance(), 10L);
 
         target.setVelocity(new Vector(0, 1.75, 0));
+
+        Particles.drawCylinder(target.getLocation(), 1, 30, 35, 0.2, Particle.FLAME, null);
+
+        new BukkitRunnable(){
+
+            @Override
+            public void run() {
+                target.getWorld().spawnParticle(Particle.EXPLOSION_HUGE, target.getLocation().setDirection(new Vector(0, 0, 0)), 0, 0, 0, 0, null);
+            }
+            
+        }.runTaskLater(Main.getInstance(), 10L);
     }
 }

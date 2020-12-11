@@ -3,7 +3,10 @@ package com.yukiemeralis.blogspot.blades.affinity;
 import java.util.Arrays;
 
 import com.yukiemeralis.blogspot.blades.Blade;
+import com.yukiemeralis.blogspot.blades.BladeData;
+import com.yukiemeralis.blogspot.blades.PlayerAccount;
 import com.yukiemeralis.blogspot.blades.guis.GUIUtils;
+import com.yukiemeralis.blogspot.blades.utils.TextUtils;
 import com.yukiemeralis.blogspot.blades.affinity.skills.*;
 
 import org.bukkit.Bukkit;
@@ -24,6 +27,7 @@ public class AffinityUtils
         // Blade data
         inv.setItem(0, chart.getOwner().getIcon());
         inv.setItem(9, trustToItem(chart.getOwner()));
+        inv.setItem(27, getDriverStats(BladeData.getAccount(chart.getOwner().getDriver())));
 
         fillRowData(chart, inv);
         fillDataRow(inv);
@@ -160,6 +164,33 @@ public class AffinityUtils
             } catch (NullPointerException error) {
             } catch (IllegalArgumentException error) {}
         }
+    }
+
+    public static ItemStack getDriverStats(PlayerAccount account)
+    {
+        ItemStack buffer = new ItemStack(Material.IRON_SWORD);
+
+        ItemMeta meta = buffer.getItemMeta();
+        meta.setDisplayName("§r§eDriver stats | §a" + account.getOwner().getDisplayName());
+
+        String[] data = {
+            "§r§bLevel: §a" + account.getLevel(), 
+            "§r§bExp. to next: §a" + account.getExpToNext(),
+            "§r§bHP: §a" + account.getMaxVirtualHP(),
+            "§r§bAttack: §a" + Math.round(account.getStatAttack()*10),
+            "§r§bDefense: §a" + Math.round(account.getStatDefense()*10),
+            "§r§bHealing: §a" + Math.round(account.getStatHealing()*10),
+            "§r§bElement: §a" + TextUtils.formatNicely(account.getCurrentBlade().getElement().toString()),
+            "§r§bRole: §a" + TextUtils.formatNicely(account.getCurrentBlade().getCombatRole().toString()),
+            "§r§bCrit rate: §a" + account.getCurrentBlade().getCritRate() + "%",
+            "§r§bBlock rate: §a" + account.getCurrentBlade().getBlockRate() + "%"
+        };
+
+        meta.setLore(Arrays.asList(data));
+
+        buffer.setItemMeta(meta);
+
+        return buffer;
     }
 
 

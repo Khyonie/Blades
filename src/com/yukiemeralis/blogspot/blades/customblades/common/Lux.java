@@ -15,11 +15,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import net.minecraft.server.v1_16_R3.EntityTypes;
+
 public class Lux extends Blade {
 
     public Lux() 
     {
-        super("Lux", Element.LIGHT, Role.TANK, WeaponType.AXE, 1);
+        super("Lux", Element.LIGHT, Role.TANK, WeaponType.AXE, 1, EntityTypes.IRON_GOLEM, false);
 
         chart = AffinityUtils.multi_color.clone();
         chart.setOwner(this);

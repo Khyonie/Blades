@@ -27,7 +27,7 @@ public class PlayerBlade extends Blade
     // In case a player themselves wants to act as a blade for someone
     public PlayerBlade(String name, Element element, Role role, WeaponType type) 
     {
-        super(name, element, role, type, 5);
+        super(name, element, role, type, 5, null, false);
 
         chart = AffinityUtils.blank_chart.clone();
     }

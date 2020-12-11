@@ -9,6 +9,7 @@ import com.yukiemeralis.blogspot.blades.PlayerAccount;
 import com.yukiemeralis.blogspot.blades.combat.CombatData;
 import com.yukiemeralis.blogspot.blades.combat.CombatInfo;
 import com.yukiemeralis.blogspot.blades.combat.SpecialBar;
+import com.yukiemeralis.blogspot.blades.listeners.events.BladeEngageEvent;
 
 import org.bukkit.Bukkit;
 import org.bukkit.boss.BarColor;
@@ -156,5 +157,33 @@ public class BladeListeners implements Listener
             // Update board
             data.updateBoard();
         } catch (NullPointerException error) {}
+    }
+
+    @EventHandler
+    public void onBladeEngage(BladeEngageEvent event)
+    {
+        Blade blade = event.getBlade();
+        Player target = event.getDriver();
+
+        PlayerAccount account = BladeData.getAccount(target);
+
+        switch (blade.getCombatRole().toString())
+        {
+            case "ATTACK": // + Attack
+                account.setMaxVirtualHP(account.getBaseMaxHealth());
+                account.setStatAttack(account.getBaseStatAttack() * 1.1);
+                account.setStatHealing(1.0);
+                break;
+            case "TANK": // + HP
+                account.setMaxVirtualHP((int) Math.round(account.getMaxVirtualHP() * 1.5));
+                account.setStatAttack(account.getBaseStatAttack());
+                account.setStatHealing(1.0);
+                break;
+            case "HEALER": // + Healing
+                account.setMaxVirtualHP(account.getBaseMaxHealth());
+                account.setStatAttack(account.getBaseStatAttack());
+                account.setStatHealing(1.2);
+                break;
+        }
     }
 }

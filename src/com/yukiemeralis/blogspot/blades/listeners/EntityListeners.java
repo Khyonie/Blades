@@ -16,7 +16,9 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
 
@@ -47,18 +49,38 @@ public class EntityListeners implements Listener
         String name = TextUtils.formatNicely(event.getEntityType().name()) + " | level " + level;
         EntityAccount account = new EntityAccount(name, level, event.getEntity());
 
+        accounts.put(event.getEntity(), account);
+
         // Set up health based on the level
         Attributable target = (Attributable) event.getEntity();
 
         event.getEntity().setCustomName(name);
         event.getEntity().setCustomNameVisible(true);
 
-        // hp = (base_hp + (level / 4))*difficulty
-        double hp =  account.getDifficulty() * (target.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue() + (account.getLevel()/4));
+        // hp = maxhp * (level / 4) * difficulty
+        double hp =  (target.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue() * (level / 4))*account.getDifficulty();
 
         target.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(hp);
 
         ((Damageable) event.getEntity()).setHealth(target.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
+
+        // Set up damage the entity can deal (level + base)
+        try {
+            target.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE).setBaseValue(target.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE).getValue() + level);
+        } catch (NullPointerException error) {}
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onDamage(EntityDamageEvent event)
+    {
+        if (event.getEntity() instanceof Player)
+            return;
+        if (!(event.getEntity() instanceof LivingEntity))
+            return;
+
+        try {
+            accounts.get(event.getEntity()).getCombatInfo().showEnemyHealthBar();
+        } catch (NullPointerException error) {}
     }
 
     // On entity death
@@ -75,8 +97,7 @@ public class EntityListeners implements Listener
             if (entity instanceof Player)
                 BladeData.getAccount((Player) entity).addExperience(accounts.get(event.getEntity()).getExpValue());
         });
-            
-
+        
         accounts.remove(event.getEntity());
     }
 

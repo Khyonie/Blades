@@ -19,11 +19,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import net.minecraft.server.v1_16_R3.EntityTypes;
+
 public class Lumi extends Blade 
 {
     public Lumi() 
     {
-        super("Lumi", Element.ICE, Role.HEALER, WeaponType.BOW, 1);
+        super("Lumi", Element.ICE, Role.HEALER, WeaponType.BOW, 1, EntityTypes.WOLF, false);
 
         chart = AffinityUtils.createAffinityChart(this,
             AffinityUtils.createAffinityRow(new Skill_CryogenicRegen(1), null,                      new Skill_WarmthSap(1), new Skill_ColdCompress(1), null, null, null),
@@ -35,7 +37,7 @@ public class Lumi extends Blade
         chart.setOwner(this);
 
         // Set special data
-        setSpecialInfo(0, "Piercing chill", "Heals two small HP potions.", Element.ICE);
+        setSpecialInfo(0, "Piercing chill", "Spawns two small HP potions.", Element.ICE);
         setSpecialInfo(1, "Glacial numbness", "Heals a medium amount of health.", Element.ICE);
         setSpecialInfo(2, "Permafrost blast", "Slows all nearby targets. +Medium healing", Element.ICE);
         setSpecialInfo(3, "Everlasting winter", "Heavily slows all nearby targets. +Heavy healing", Element.ICE);

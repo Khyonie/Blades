@@ -1,4 +1,4 @@
-package com.yukiemeralis.blogspot.blades.listeners;
+package com.yukiemeralis.blogspot.blades.listeners.events;
 
 import com.yukiemeralis.blogspot.blades.affinity.AffinitySkill;
 
@@ -22,7 +22,8 @@ public class AffinitySkillTriggerEvent extends Event
         this.target = target;
     }
 
-    public static HandlerList getHandlerList() {
+    public static HandlerList getHandlerList() 
+    {
         return handlers;
     }
 

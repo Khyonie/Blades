@@ -12,6 +12,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.v1_16_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 public class Commands implements CommandExecutor 
@@ -189,7 +190,7 @@ public class Commands implements CommandExecutor
                             new Party((Player) sender).join((Player) sender);
                             sender.sendMessage("§aCreated a new party!");
 
-                            break;
+                            return true;
                         case "join":
                             if (account.getParty() != null)
                             {
@@ -212,7 +213,7 @@ public class Commands implements CommandExecutor
 
                             BladeData.getAccount(Bukkit.getPlayerExact(target)).getParty().join((Player) sender);
                             sender.sendMessage("§aJoined party!");
-                            break;
+                            return true;
                         case "leave":
                             if (account.getParty() != null)
                             {
@@ -222,8 +223,15 @@ public class Commands implements CommandExecutor
 
                             account.getParty().leave((Player) sender);
 
-                            break;
+                            return true;
                     }
+                    return true;
+                case "debug":
+                    Bukkit.getOnlinePlayers().forEach(player -> {
+                        ((CraftPlayer) player).getHandle().setInvulnerable(false);
+                    });
+
+                    sender.sendMessage("§aCommand executed without incident.");
                     return true;
                 default: 
                     sender.sendMessage("§c" + subcmd + " is not a recognized subcommand!");
@@ -239,7 +247,7 @@ public class Commands implements CommandExecutor
     {
         if (BladeRegistry.getRegistry().get(name) == null)
         {
-            sender.sendMessage("No blade exists by that name!");
+            sender.sendMessage("§aNo blade exists by that name!");
             return;
         }
 

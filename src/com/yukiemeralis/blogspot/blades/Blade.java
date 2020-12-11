@@ -6,18 +6,31 @@ import com.yukiemeralis.blogspot.blades.affinity.AffinityChart;
 import com.yukiemeralis.blogspot.blades.affinity.AffinitySkill;
 import com.yukiemeralis.blogspot.blades.affinity.AffinityUtils;
 import com.yukiemeralis.blogspot.blades.customspecials.SpecialData;
+import com.yukiemeralis.blogspot.blades.entities.BladeEntity;
+import com.yukiemeralis.blogspot.blades.entities.npcs.NPC;
+import com.yukiemeralis.blogspot.blades.entities.npcs.NPCManager;
+import com.yukiemeralis.blogspot.blades.entities.npcs.skins.Skins;
 import com.yukiemeralis.blogspot.blades.enums.*;
-import com.yukiemeralis.blogspot.blades.listeners.TrustGradeRaiseEvent;
+import com.yukiemeralis.blogspot.blades.listeners.events.TrustGradeRaiseEvent;
+import com.yukiemeralis.blogspot.blades.utils.PacketManager;
+import com.yukiemeralis.blogspot.blades.utils.Particles;
 import com.yukiemeralis.blogspot.blades.utils.TextUtils;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
+import org.bukkit.Color;
 import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.craftbukkit.v1_16_R3.CraftWorld;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+
+import net.minecraft.server.v1_16_R3.ChatComponentText;
+import net.minecraft.server.v1_16_R3.EntityCreature;
+import net.minecraft.server.v1_16_R3.EntityTypes;
+import net.minecraft.server.v1_16_R3.WorldServer;
 
 public abstract class Blade implements Cloneable {
     // Blade stats
@@ -25,6 +38,8 @@ public abstract class Blade implements Cloneable {
     protected Element element;
     protected Role role;
     protected WeaponType type;
+    protected boolean isHumanNPC;
+    protected NPC npc_entity;
 
     protected int rarity;
 
@@ -47,30 +62,96 @@ public abstract class Blade implements Cloneable {
     protected SpecialData[] skills = new SpecialData[4];
 
     // Minecraft stats
-    Entity entity;
-    EntityType entityType;
+    BladeEntity entity;
+    EntityTypes<? extends EntityCreature> entitytype;
 
-    public Blade(String name, Element element, Role role, WeaponType type, int rarity) {
+    public Blade(String name, Element element, Role role, WeaponType type, int rarity, EntityTypes<? extends EntityCreature> entitytype, boolean isHumanNPC) {
         this.name = name;
         this.element = element;
         this.role = role;
         this.type = type;
         this.rarity = rarity;
+        this.entitytype = entitytype;
+        this.isHumanNPC = isHumanNPC;
 
         register();
     }
 
-    public void setMinecraftProperties(EntityType entityType) {
-        this.entityType = entityType;
+    public void setMinecraftProperties() {
+        entity = new BladeEntity(entitytype, driver.getLocation());
+
+        if (isHumanNPC)
+        {
+            entity.setIsHumanoid(true); // Mark the NPC as having a human avatar
+            npc_entity = new NPC(this, NPCManager.createNPC(entity.getBukkitEntity(), name));
+            npc_entity.setHost(this); // Set the NPC to have this blade as its host
+            npc_entity.linkSkin(Skins.data.get(name)); // Link the skin for the blade
+        }
+            
     }
 
-    public void spawn(Location location) {
-        entity = location.getWorld().spawnEntity(location, entity.getType());
-        entity.setInvulnerable(true);
+    public BladeEntity getAvatar()
+    {
+        return entity;
     }
 
-    public void despawn() {
-        entity.remove();
+    public void spawn()
+    {
+        if (isPlayer)
+            return;
+        entity.setDriver(driver);
+        WorldServer world = ((CraftWorld) ((Player) driver).getWorld()).getHandle();
+
+        world.addEntity(entity); // Spawn the entity in the world
+        entity.link(this); // Link this blade and the blade's avatar together
+
+        if (isHumanNPC) {
+            NPCManager.npcs.put(this, npc_entity);
+
+            // Spawn the NPC on the client and server side
+            npc_entity.spawn(entity.getBukkitLocation()); 
+            
+            // Hide the base zombie avatar
+            Bukkit.getOnlinePlayers().forEach(target -> {
+                PacketManager.hideEntity(entity, target);
+            });
+
+            npc_entity.getAvatarData().setCustomName(new ChatComponentText(elementToColor(element) + name + " | " + driver.getDisplayName()));
+        } else {
+            BladeData.blade_entities.add(entity);
+            entity.setCustomName(new ChatComponentText(elementToColor(element) + name + " | " + driver.getDisplayName()));
+        }
+        
+    }
+
+    public void despawn() 
+    {
+        if (isPlayer)
+            return;
+        WorldServer world = ((CraftWorld) ((Player) driver).getWorld()).getHandle();
+
+        if (entity.getIsHumanoid())
+        {
+            npc_entity.despawn(false);
+            world.removeEntity(entity);
+        } else {
+            world.removeEntity(entity);
+        }
+    }
+
+    public void linkNPC()
+    {
+        getAvatar().setIsHumanoid(true);
+    }
+
+    public NPC getLinkedNPC()
+    {
+        return npc_entity;
+    }
+
+    public boolean isHumanoid()
+    {
+        return this.isHumanNPC;
     }
 
     public void setDriver(Player driver) {
@@ -223,31 +304,31 @@ public abstract class Blade implements Cloneable {
         {
             chart.getRow(0).setUnlockedState(true);
             chart.raiseUnlockLevel();
-            Bukkit.getPluginManager().callEvent(new TrustGradeRaiseEvent(this, driver, AffinityUtils.trustToGrade(trust), 1));
+            Bukkit.getPluginManager().callEvent(new TrustGradeRaiseEvent(this, driver, AffinityUtils.trustToGrade(trust / trustMultiplier * 100), 1));
         }
         if (trust >= trustMultiplier * 175 && !chart.getRow(1).isUnlocked())
         {
             chart.getRow(1).setUnlockedState(true);
             chart.raiseUnlockLevel();
-            Bukkit.getPluginManager().callEvent(new TrustGradeRaiseEvent(this, driver, AffinityUtils.trustToGrade(trust), 2));
+            Bukkit.getPluginManager().callEvent(new TrustGradeRaiseEvent(this, driver, AffinityUtils.trustToGrade(trust / trustMultiplier * 175), 2));
         }
         if (trust >= trustMultiplier * 300 && !chart.getRow(2).isUnlocked())
         {
             chart.getRow(2).setUnlockedState(true);
             chart.raiseUnlockLevel();
-            Bukkit.getPluginManager().callEvent(new TrustGradeRaiseEvent(this, driver, AffinityUtils.trustToGrade(trust), 3));
+            Bukkit.getPluginManager().callEvent(new TrustGradeRaiseEvent(this, driver, AffinityUtils.trustToGrade(trust / trustMultiplier * 300), 3));
         }
         if (trust >= trustMultiplier * 400 && !chart.getRow(3).isUnlocked())
         {
             chart.getRow(3).setUnlockedState(true);
             chart.raiseUnlockLevel();
-            Bukkit.getPluginManager().callEvent(new TrustGradeRaiseEvent(this, driver, AffinityUtils.trustToGrade(trust), 4));
+            Bukkit.getPluginManager().callEvent(new TrustGradeRaiseEvent(this, driver, AffinityUtils.trustToGrade(trust / trustMultiplier * 400), 4));
         }
         if (trust >= trustMultiplier * 750 && !chart.getRow(4).isUnlocked())
         {
             chart.getRow(4).setUnlockedState(true);
             chart.raiseUnlockLevel();
-            Bukkit.getPluginManager().callEvent(new TrustGradeRaiseEvent(this, driver, AffinityUtils.trustToGrade(trust), 5));
+            Bukkit.getPluginManager().callEvent(new TrustGradeRaiseEvent(this, driver, AffinityUtils.trustToGrade(trust / trustMultiplier * 750), 5));
         }
             
     }
@@ -317,6 +398,41 @@ public abstract class Blade implements Cloneable {
     protected void register()
     {
         BladeRegistry.getRegistry().put(this.name, this);
+    }
+
+    public void drawAffinityLine()
+    {
+        PlayerAccount account = BladeData.getAccount(driver);
+
+        Color color = Color.RED;
+
+        switch (account.getAffinity())
+        {
+            case 0: color = Color.fromRGB(0, 150, 255); break;
+            case 1: color = Color.fromRGB(64, 224, 208); break;
+            case 2: color = Color.YELLOW; break;
+        }
+
+        if (isHumanNPC)
+        {
+            Particles.drawLine
+            (
+                ((LivingEntity) entity.getBukkitEntity()).getLocation().add(0, 1.2, 0), 
+                driver.getLocation().add(0, 1, 0), 
+                0.1, Particle.REDSTONE, 
+                new Particle.DustOptions(color, 1)
+            );
+        } else {
+            Particles.drawLine
+            (
+                ((LivingEntity) entity.getBukkitEntity()).getEyeLocation(), 
+                driver.getLocation().add(0, 1, 0), 
+                0.1, Particle.REDSTONE, 
+                new Particle.DustOptions(color, 1)
+            );
+        }
+
+        
     }
 
     //

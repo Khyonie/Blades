@@ -1,4 +1,4 @@
-package com.yukiemeralis.blogspot.blades.listeners;
+package com.yukiemeralis.blogspot.blades.listeners.events;
 
 import com.yukiemeralis.blogspot.blades.Blade;
 

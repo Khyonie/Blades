@@ -9,9 +9,12 @@ import com.yukiemeralis.blogspot.blades.affinity.AffinityChart;
 import com.yukiemeralis.blogspot.blades.customblades.common.*;
 import com.yukiemeralis.blogspot.blades.customspecials.attack.*;
 import com.yukiemeralis.blogspot.blades.customspecials.healer.*;
+import com.yukiemeralis.blogspot.blades.entities.npcs.NPCManager;
 import com.yukiemeralis.blogspot.blades.customspecials.blade.*;
 
+import org.bukkit.Location;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public class Main extends JavaPlugin
 {
@@ -85,12 +88,30 @@ public class Main extends JavaPlugin
         new PBS_malos_1();
         new PBS_malos_2();
         new PBS_malos_3();
+
+        // Start up blade NPC timer
+        new BukkitRunnable(){
+            @Override
+            public void run() 
+            {
+                NPCManager.npcs.forEach((key, npc) -> {
+                    Location loc = npc.getHost().getAvatar().getBukkitEntity().getLocation();
+                    npc.teleport(loc);
+                });
+            }
+            
+        }.runTaskTimer(this, 0L, 1L);
     }
 
     @Override
     public void onDisable()
     {
-
+        // Clean up all spawned blade NPCs
+        BladeData.blade_entities.forEach(blade -> {
+            blade.getLinked().despawn();
+            blade.getLinked().getLinkedNPC().despawn(true);
+        });
+        System.out.println("[Blades] Despawned all blade NPCs!");
     }
 
     public static Main getInstance()

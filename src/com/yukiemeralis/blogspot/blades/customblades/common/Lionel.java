@@ -19,16 +19,18 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
+import net.minecraft.server.v1_16_R3.EntityTypes;
+
 public class Lionel extends Blade 
 {
     public Lionel() 
     {
-        super("Lionel", Element.ELECTRIC, Role.ATTACK, WeaponType.TRIDENT, 1);
+        super("Lionel", Element.ELECTRIC, Role.ATTACK, WeaponType.TRIDENT, 1, EntityTypes.DROWNED, false);
 
         chart = AffinityUtils.createAffinityChart(this, 
-            AffinityUtils.createAffinityRow(new Skill_SwiftStep(1), new Skill_StaticField(1), null,                   new Skill_AffinityBoost(1), null, null, null),
+            AffinityUtils.createAffinityRow(null,                   new Skill_StaticField(1), null,                   new Skill_AffinityBoost(1), null, null, null),
             AffinityUtils.createAffinityRow(null,                   null,                     null,                   new Skill_AffinityBoost(2), null, null, null),
-            AffinityUtils.createAffinityRow(null,                   null,                     new Skill_Conductor(1), new Skill_AffinityBoost(3), null, null, null),
+            AffinityUtils.createAffinityRow(new Skill_SwiftStep(1), null,                     new Skill_Conductor(1), new Skill_AffinityBoost(3), null, null, null),
             AffinityUtils.createAffinityRow(null,                   new Skill_StaticField(2), null,                   new Skill_AffinityBoost(4), null, null, null),
             AffinityUtils.createAffinityRow(new Skill_SwiftStep(2), new Skill_StaticField(3), null,                   new Skill_AffinityBoost(5), null, null, null)
         );

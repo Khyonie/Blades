@@ -2,6 +2,7 @@ package com.yukiemeralis.blogspot.blades.listeners;
 
 import java.util.Random;
 
+import com.yukiemeralis.blogspot.blades.Blade;
 import com.yukiemeralis.blogspot.blades.BladeData;
 import com.yukiemeralis.blogspot.blades.PlayerAccount;
 import com.yukiemeralis.blogspot.blades.affinity.AffinityActivationType;
@@ -47,16 +48,19 @@ public class VirtualHealthListener implements Listener
                 return;
             }
             
-            // If the blade's second battle skill is about taking hits...
-            if (acnt.getCurrentBlade().getAffinityChart().getHighestSkillInColumn(1).getActivationType().equals(AffinityActivationType.ON_DAMAGE))
-            {
-                if (random.nextInt(15) == 0)
+            try {
+                // If the blade's second battle skill is about taking hits...
+                if (acnt.getCurrentBlade().getAffinityChart().getHighestSkillInColumn(1).getActivationType().equals(AffinityActivationType.ON_DAMAGE))
                 {
-                    AffinitySkill skill = acnt.getCurrentBlade().getAffinityChart().getHighestSkillInColumn(1);
+                    if (random.nextInt(15) == 0)
+                    {
+                        AffinitySkill skill = acnt.getCurrentBlade().getAffinityChart().getHighestSkillInColumn(1);
 
-                    skill.runEffect(null, (Player) event.getEntity());
+                        skill.runEffect(null, (Player) event.getEntity());
+                    }
                 }
-            }
+            } catch (NullPointerException error) {}
+            
 
             acnt.dealVirtualHPDamage(event.getDamage());
         }
@@ -84,6 +88,14 @@ public class VirtualHealthListener implements Listener
         BladeData.getAccount(event.getPlayer()).setIsDead(false);
 
         try {
+            Blade b = BladeData.getAccount(event.getPlayer()).getCurrentBlade();
+            b.getLinkedNPC().teleport(b.getAvatar().getBukkitLocation());
+        } catch (NullPointerException error) {
+            error.printStackTrace();
+        }
+        
+
+        try {
             BladeData.addBladeWeapon(BladeData.getAccount(event.getPlayer()).getCurrentBlade());
         } catch (Exception error) {}
     }
@@ -94,5 +106,9 @@ public class VirtualHealthListener implements Listener
         PlayerAccount account = BladeData.getAccount(event.getEntity());
 
         account.setIsDead(true);
+
+        try {
+            account.getCurrentBlade().despawn();
+        } catch (NullPointerException error) {}
     }
 }

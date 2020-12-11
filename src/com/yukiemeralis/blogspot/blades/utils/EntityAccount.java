@@ -2,7 +2,13 @@ package com.yukiemeralis.blogspot.blades.utils;
 
 import java.util.Random;
 
+import com.yukiemeralis.blogspot.blades.combat.CombatInfo;
+import com.yukiemeralis.blogspot.blades.customspecials.MobTypes;
+
+import org.bukkit.attribute.Attributable;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 
 public class EntityAccount 
 {
@@ -12,9 +18,11 @@ public class EntityAccount
     String name;
     boolean unique;
 
-    int difficulty; // Difficulty scale for each enemy from 0-20, where 0 is unique
+    int difficulty; // Difficulty scale for each enemy from 0-10, where 0 is unique
 
     int experience_value;
+
+    CombatInfo combat;
 
     private static Random random = new Random();
 
@@ -25,12 +33,14 @@ public class EntityAccount
 
         this.owner = entity;
 
-        difficulty = random.nextInt(20);
+        difficulty = 1 + random.nextInt(9);
 
         if (difficulty == 0)
             unique = true;
 
-        experience_value = (level * difficulty) /10;
+        experience_value = (level * difficulty);
+        if (MobTypes.passive.contains(entity.getType()));
+            experience_value = experience_value /10;
     }
 
     // Getters
@@ -64,9 +74,31 @@ public class EntityAccount
         return experience_value;
     }
 
+    /**
+     * Gives us the HP percentage of the entity.
+     * @return
+     */
+    public double getHpPercent()
+    {
+        double max = ((Attributable) owner).getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
+        double current = ((LivingEntity) owner).getHealth();
+
+        return current/max;
+    }
+
     // Setters
     public void setIsUnique(boolean unique)
     {
         this.unique = unique;
+    }
+
+    public void linkCombatInfo(CombatInfo info)
+    {
+        this.combat = info;
+    }
+
+    public CombatInfo getCombatInfo()
+    {
+        return this.combat;
     }
 }

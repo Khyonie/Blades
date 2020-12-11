@@ -10,6 +10,9 @@ import com.yukiemeralis.blogspot.blades.affinity.AffinitySkill;
 import com.yukiemeralis.blogspot.blades.combat.CombatData;
 import com.yukiemeralis.blogspot.blades.combat.CombatInfo;
 import com.yukiemeralis.blogspot.blades.combat.SpecialBar;
+import com.yukiemeralis.blogspot.blades.entities.npcs.NPCManager;
+import com.yukiemeralis.blogspot.blades.listeners.events.AffinitySkillTriggerEvent;
+import com.yukiemeralis.blogspot.blades.listeners.events.TrustGradeRaiseEvent;
 import com.yukiemeralis.blogspot.blades.utils.TextUtils;
 
 import org.bukkit.Bukkit;
@@ -28,6 +31,7 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -48,6 +52,17 @@ public class GenericListeners implements Listener
             PlayerAccount account = new PlayerAccount(event.getPlayer());
 
             BladeData.accounts.put(event.getPlayer().getUniqueId().toString(), account);
+        } else {
+            // Spawn the player's equipped blade
+            BladeData.getAccount(event.getPlayer()).getCurrentBlade().spawn();
+            BladeData.blade_entities.add(BladeData.getAccount(event.getPlayer()).getCurrentBlade().getAvatar()); // Mark the entity for cleanup
+            BladeData.getAccount(event.getPlayer()).getBladeStock().forEach(blade -> {
+                blade.setDriver(event.getPlayer());
+            });
+            BladeData.getAccount(event.getPlayer()).getEngagedBlades().forEach(blade -> {
+                if (blade != null)
+                    blade.setDriver(event.getPlayer());
+            });
         }
 
         // Fire up the clock for field skills
@@ -60,6 +75,36 @@ public class GenericListeners implements Listener
                 } catch (Exception error) {}
             }
         }.runTaskTimer(Main.getInstance(), 0L, 100L);
+
+        // Run a quick cleanup of disconnected NPCs
+        NPCManager.npcs.values().removeIf(npc -> {
+            if (npc.getHost().equals(BladeData.getAccount(npc.getHost().getDriver()).getCurrentBlade()))
+                return false;
+            return true;
+        });
+
+        NPCManager.npcs.keySet().removeIf(blade -> {
+            if (NPCManager.npcs.get(blade).equals(null))
+                return true;
+            return false;
+        });
+
+        // Spawn visible entities
+        NPCManager.npcs.forEach((host, npc) -> {
+            NPCManager.destroyNPC(host, false);
+            NPCManager.showSkinnedNPC(host);
+        });
+    }
+
+    @EventHandler
+    public void onLeave(PlayerQuitEvent event)
+    {
+        // Perform a little cleanup
+        PlayerAccount account = BladeData.getAccount(event.getPlayer());
+
+        // Despawn the player's blade until they log in again
+        BladeData.blade_entities.remove(account.getCurrentBlade().getAvatar());
+        account.getCurrentBlade().despawn();
     }
 
     // Affinity skill listener
@@ -111,7 +156,7 @@ public class GenericListeners implements Listener
             }
         }
 
-        if (player.getInventory().getItemInMainHand() == null)
+        if (player.getInventory().getItemInMainHand().getItemMeta() == null)
             return;
 
         if (!BladeData.isBladeWeapon(player.getInventory().getItemInMainHand()))
@@ -150,17 +195,35 @@ public class GenericListeners implements Listener
         handleCombat(driver, target, 4.0);
     }
     
+    /**
+     * General handler of all combat, projectile and melee-wise.
+     */
     boolean critical = false;
     private void handleCombat(Player player, Entity target, double damage)
     {
+        // If the player has no blade, return
         if (BladeData.getAccount(player).getCurrentBlade() == null)
-        {
             return;
-        }
 
+        // If the target is the player's own blade, return
+        if (BladeData.getAccount(player).getCurrentBlade().getAvatar().getBukkitEntity().equals(target))
+            return;
+
+        // If the target is someone else's blade, return
+        BladeData.blade_entities.forEach(entity -> {
+            if (target.equals(entity.getBukkitEntity()))
+                return;
+        });
+
+        // If the player themselves is the target, return
         if (player.equals(target))
             return;
 
+        //
+        // Finally we get to the good stuff.
+        //
+
+        // If the player isn't in combat, begin a new combat sequence
         if (!CombatData.isInCombat(player))
         {
             CombatData.beginCombat(player, target);
@@ -169,8 +232,7 @@ public class GenericListeners implements Listener
         CombatInfo data = CombatData.getCombatInfo(player);
         BladeData.getAccount(player).addBladeSpecialProgress(20);
 
-        // Apply level-based damage
-        damage = (damage + BladeData.getAccount(player).getLevel());
+        // Increase inflicted damage based on level
 
         // Roll for a crit
         if (random.nextInt(100) <= BladeData.getAccount(player).getCurrentBlade().getCritRate())
@@ -216,6 +278,7 @@ public class GenericListeners implements Listener
                 
             } catch (Exception error) {}
 
+            // Special bar
             switch (BladeData.getAccount(player).getAffinity())
             {
                 case 0: color = BarColor.BLUE; break;
@@ -225,6 +288,7 @@ public class GenericListeners implements Listener
 
             data.getSpecialBar().setColor(color);
             data.getSpecialBar().setTitle(SpecialBar.generateDisplayName(player));
+            
         } catch (NullPointerException error) {}
 
         if (!data.getCombatants().contains(target))
@@ -234,10 +298,15 @@ public class GenericListeners implements Listener
                 return;
 
             data.addTarget(target);
+            if (!(target instanceof Player))
+                EntityListeners.accounts.get(target).linkCombatInfo(data);
         }
 
         // Update party board
         data.updateBoard();
+
+        // HP bar
+        data.showEnemyHealthBar();
 
         if (!data.getTarget().equals(target))
             data.setTarget(target);

@@ -7,8 +7,10 @@ import com.yukiemeralis.blogspot.blades.BladeData;
 import com.yukiemeralis.blogspot.blades.Main;
 import com.yukiemeralis.blogspot.blades.affinity.AffinityActivationType;
 import com.yukiemeralis.blogspot.blades.affinity.AffinitySkill;
+import com.yukiemeralis.blogspot.blades.guis.EnemyHPBar;
 import com.yukiemeralis.blogspot.blades.guis.PartyScoreboard;
-import com.yukiemeralis.blogspot.blades.listeners.AffinitySkillTriggerEvent;
+import com.yukiemeralis.blogspot.blades.listeners.EntityListeners;
+import com.yukiemeralis.blogspot.blades.listeners.events.AffinitySkillTriggerEvent;
 
 import org.bukkit.Bukkit;
 import org.bukkit.boss.BossBar;
@@ -48,7 +50,11 @@ public class CombatInfo
             public void run() 
             {
                 if (!this.isCancelled())
+                {
                     checkIfEnemyIsAlive();
+                    BladeData.getAccount(player).getCurrentBlade().drawAffinityLine();
+                }
+                    
             }
         }.runTaskTimer(Main.getInstance(), 1L, 5L);
 
@@ -118,6 +124,12 @@ public class CombatInfo
     {
         enemies.add(target);
         setTarget(target);
+
+        try {
+            if (!(target instanceof Player))
+                EntityListeners.accounts.get(target).linkCombatInfo(this);
+        } catch (NullPointerException error) {}
+        
     }
 
     public void setTarget(Entity target)
@@ -181,6 +193,8 @@ public class CombatInfo
         battle_skill_timer.cancel();
         this.isActive = false;
 
+        EnemyHPBar.show(0, player, current_enemy);
+
         try {
             special_bar.removeAll();
         } catch (NullPointerException error) {}
@@ -216,6 +230,11 @@ public class CombatInfo
                     deactivate("Timed out");
             }
         }.runTaskLater(Main.getInstance(), 45*20);
+    }
+
+    public void showEnemyHealthBar()
+    {
+        EnemyHPBar.show(player, current_enemy);
     }
 
     public void stopTimer()

@@ -1,7 +1,9 @@
 package com.yukiemeralis.blogspot.blades;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.yukiemeralis.blogspot.blades.entities.BladeEntity;
 import com.yukiemeralis.blogspot.blades.enums.WeaponType;
 
 import org.bukkit.Material;
@@ -14,6 +16,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 public class BladeData 
 {
     public static HashMap<String, PlayerAccount> accounts = new HashMap<>();    
+
+    public static ArrayList<BladeEntity> blade_entities = new ArrayList<>();
 
     public static PlayerAccount getAccount(Player player)
     {

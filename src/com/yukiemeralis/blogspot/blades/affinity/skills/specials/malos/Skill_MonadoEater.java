@@ -10,7 +10,7 @@ public class Skill_MonadoEater extends AffinitySkill
 {
     public Skill_MonadoEater(int level) 
     {
-        super("Monado Eater", "Increases damage dealt to humans by " + level + "♥.", level, AffinitySkillType.SPECIAL);
+        super("Monado Jail", "Increases damage dealt to humans by " + level + "♥.", level, AffinitySkillType.SPECIAL);
     }
 
     @Override

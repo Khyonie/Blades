@@ -12,7 +12,7 @@ public class Skill_CriticalAmp extends AffinitySkill
 {
     public Skill_CriticalAmp(int level) 
     {
-        super("Critical amp", "Increased base crit rate by " + (5 + (10 * level)) + "%.", level, AffinitySkillType.FIELD);
+        super("Critical amp", "Increases base crit rate by " + (5 + (10 * level)) + "%.", level, AffinitySkillType.FIELD);
 
         icon = Material.BOOK;
     }

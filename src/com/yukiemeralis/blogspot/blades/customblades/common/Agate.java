@@ -14,11 +14,13 @@ import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
+import net.minecraft.server.v1_16_R3.EntityTypes;
+
 public class Agate extends Blade 
 {
     public Agate() 
     {
-        super("Agate", Element.EARTH, Role.TANK, WeaponType.AXE, 4);
+        super("Agate", Element.EARTH, Role.TANK, WeaponType.AXE, 4, EntityTypes.IRON_GOLEM, false);
 
         chart = AffinityUtils.createAffinityChart(this, 
             AffinityUtils.createAffinityRow(null,                         new Skill_BlastMining(1), null,                   new Skill_SharpPickaxe(1), new Skill_HeliodorPassion(1), new Skill_StarBerylCourage(1), new Skill_RhodochrositeMight(1)),

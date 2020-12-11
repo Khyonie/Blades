@@ -13,13 +13,14 @@ public class Skill_SwiftStep extends AffinitySkill
 {
     public Skill_SwiftStep(int level) 
     {
-        super("Swift step", "Increase out of battle movement speed.", level, AffinitySkillType.FIELD);
+        super("Swift step", "Increase out of battle movement speed in thunder.", level, AffinitySkillType.FIELD);
         this.icon = Material.FEATHER;
     }
 
     @Override
     public void runEffect(Entity target, Player driver) 
     {
-        driver.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 15*20, level-1));
+        if (driver.getWorld().isThundering())
+            driver.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 15*20, level-1));
     }
 }
